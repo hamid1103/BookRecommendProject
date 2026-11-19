@@ -15,17 +15,17 @@ Uitkomst van de data-analyse (uit `data_analyse.docx`): per kolom het gevonden p
 | Korte omschrijving |  |  |
 | Unnamed: 3 | Onnodig, er is geen data aanwezig en het zegt niks over de data | De kolom verwijdert |
 | Type materiaal | Verschillen in spelling: boek, Boek, boek-thriller | Met regex alles gewijzigd naar boek |
-| Niveau | 6 ontbrekende niveaus | Allen nans naar 2f?? |
+| Niveau | 6 ontbrekende niveaus | Allen nans naar 2F |
 | Thema’s boek | Er ontbreken 134 thema’s |  |
 | Materiaal id |  |  |
 | Genre | Er ontbreken 26 genres | Alle nans naar fictie zetten |
 | Onderwerp | 181 lege onderwerpen |  |
 | Trefwoorden | 181 lege onderwerpen |  |
 | Taal | Verschillen in NL, NED, nederlands | Alles met regex naar Nederlands gezet |
-| Aantal paginas | Een Aantal pagina’s zijn nul of negatieve waarde en 17 ontbreken | Model trainen op geschatte leestijd min zodat we predictions kunnen maken |
-| Geschatte leestijd | 9 ontbrekende leestijden | Fixen met de mediaan zit het dichtst bij alle leestijden: 366 |
+| Aantal paginas | Een Aantal pagina’s zijn nul of negatieve waarde en 17 ontbreken | alle 0 of negative naar Nan zetten |
+| Geschatte leestijd | 9 ontbrekende leestijden | Worden gevuld met de mediaan leestijd van rijen met hetzelfde Type materiaal. |
 | Bron url | 234 ontbrekende URL’s, maar boeken hebben geen URL | Doen we niks mee, de ontbrekende zijn boeken en die hebben geen url |
-| Doelgroep | 6 ontbrekende doelgroepen | Alle nans naar nt2, zijn artikelen voor nt2 cursisten |
+| Doelgroep | 6 ontbrekende doelgroepen | Alle nans naar nt2, zijn artikelen voor nt2 cursisten |  |
 | Gegevens status | 8 ontbrekende gegevens status |  |
 | Woorden aantal omschrijving |  |  |
 | Gem woord lengte |  |  |
