@@ -1,198 +1,198 @@
-# Leesmaterial.ipynb: Documentation
+# Leesmaterial.ipynb: Documentatie
 
-This notebook cleans the reading catalogue (`Leescatalogus_Recommender_Definitief_leesmateriaal_Jarno.csv`), tries a few first models (linear regression, K-Means), and prepares the text for a content-based recommender (normalization, tokenization, lemmatization, Bag of Words).
+Dit notebook schoont de leescatalogus op (`Leescatalogus_Recommender_Definitief_leesmateriaal_Jarno.csv`), probeert een paar eerste modellen uit (lineaire regressie, K-Means) en bereidt de tekst voor op een content-based recommender (normalisatie, tokenisatie, lemmatisatie, Bag of Words).
 
-The **Why** lines come from the notes and comments in the notebook, translated from Dutch. Where the notebook doesn't say why, the line is left as _(to fill in)_.
+De **Waarom**-regels komen uit de notities en opmerkingen in het notebook. Waar het notebook geen reden geeft, staat _(nog invullen)_.
 
-## 1. Loading and general cleanup
+## 1. Inladen en algemene opschoning
 
 ```python
 LD = pd.read_csv("OriginalDatasets/Leescatalogus_Recommender_Definitief_leesmateriaal_Jarno.csv")
 ```
 
-- All text columns are stripped of leading/trailing whitespace and lowercased.
-- Duplicate rows are removed.
-- Empty `Type materiaal` is filled with `"boek"`.
-- The column `Unnamed: 3` is dropped if it exists.
+- Bij alle tekstkolommen wordt witruimte aan het begin en eind weggehaald en alles wordt lowercase.
+- Dubbele rijen worden verwijderd.
+- Lege `Type materiaal` wordt gevuld met `"boek"`.
+- De kolom `Unnamed: 3` wordt verwijderd als hij bestaat.
 
-> **Why (strip + lowercase):** _(to fill in)_
+> **Waarom (strip + lowercase):** _(nog invullen)_
 >
-> **Why (fill `Type materiaal` with "boek"):** _(to fill in)_
+> **Waarom (`Type materiaal` vullen met "boek"):** _(nog invullen)_
 >
-> **Why (drop `Unnamed: 3`):** The column sometimes exists and sometimes doesn't, but it is always empty.
+> **Waarom (`Unnamed: 3` verwijderen):** De kolom bestaat soms wel en soms niet, maar hij is altijd leeg.
 
-## 2. Column fixes
+## 2. Kolommen fixen
 
 ### Taal
 
-Every value in `taal` is replaced with `"Nederlands"`.
+Elke waarde in `taal` wordt vervangen door `"Nederlands"`.
 
-> **Why:** Checked by hand with `.unique()`: everything is in Dutch, but it is marked in different ways ("Ned", "Nederlands", "NL").
+> **Waarom:** Handmatig gecontroleerd met `.unique()`: alles is Nederlands, maar het is op verschillende manieren gemarkeerd ("Ned", "Nederlands", "NL").
 
 ### Type materiaal
 
-All book variants (`boek - thriller`, `boek - roman`, ...) become `"boek"`. Result: `boek`, `tijdschrift`, `krant (papier)`, `digitale krant`, `online artikel`, `dichtbundel`, `blogpost`.
+Alle boekvarianten (`boek - thriller`, `boek - roman`, ...) worden `"boek"`. Resultaat: `boek`, `tijdschrift`, `krant (papier)`, `digitale krant`, `online artikel`, `dichtbundel`, `blogpost`.
 
-> **Why:** Consistency: all variations of books become one value.
+> **Waarom:** Consistentie: alle variaties van boeken worden één waarde.
 
 ### Geschatte leestijd (`geschatte_leestijd_min`)
 
-- Checked with a histogram: no negative values, so nothing to change there.
-- 9 rows are empty. They are filled with the **median** reading time of rows with the same `Type materiaal`.
+- Gecontroleerd met een histogram: geen negatieve waardes, dus daar hoeft niks te veranderen.
+- 9 rijen zijn leeg. Die worden gevuld met de **mediaan** leestijd van rijen met hetzelfde `Type materiaal`.
 
-> **Why:** Grouping by reading level (`Niveau`) isn't useful here: you'd end up giving a digital article 350 minutes. Grouping by material type gives realistic values.
+> **Waarom:** Groeperen op leesniveau (`Niveau`) is hier niet handig: dan geef je een digitaal artikel 350 minuten. Groeperen op type materiaal geeft realistische waardes.
 >
-> **Why median instead of mean:** _(to fill in)_ (the note says "average", the code uses `median`)
+> **Waarom mediaan en niet gemiddelde:** _(nog invullen)_ (de notitie zegt "gemiddelde", de code gebruikt `median`)
 
-### Genre and doelgroep
+### Genre en doelgroep
 
-- Plan: fill empty `genre` (informatief for articles/newspapers/magazines/blogposts, poëzie for dichtbundels) and empty `doelgroep` with `"NT2"`.
-- Variants of `doelgroep` are merged (`mbo` → `MBO`, `mbo / nt2` → `MBO/NT2`).
+- Plan: lege `genre` vullen (informatief voor artikelen/kranten/tijdschriften/blogposts, poëzie voor dichtbundels) en lege `doelgroep` vullen met `"NT2"`.
+- Varianten van `doelgroep` worden samengevoegd (`mbo` → `MBO`, `mbo / nt2` → `MBO/NT2`).
 
-> **Why (genre):** The empty genres are filled based on `Type materiaal`. Articles, newspapers, magazines and blogposts are informative, and dichtbundels are poetry, so they're not fictie. Genre might be redone later with NLP.
+> **Waarom (genre):** De lege genres worden gevuld op basis van `Type materiaal`. Artikelen, kranten, tijdschriften en blogposts zijn informatief en dichtbundels zijn poëzie, dus ze zijn geen fictie. Genre wordt later misschien opnieuw gedaan met NLP.
 >
-> **Why (doelgroep):** The rows with an empty `doelgroep` were checked and are newspapers/magazines.
+> **Waarom (doelgroep):** De rijen met een lege `doelgroep` zijn gecontroleerd en het zijn kranten/tijdschriften.
 >
-> **Why NT2 for those rows:** _(to fill in)_
+> **Waarom NT2 voor die rijen:** _(nog invullen)_
 
-### Themas_boek and trefwoorden
+### Themas_boek en trefwoorden
 
-- Values in `Themas_boek` that start with `https` become `NaN`.
-- `"[naturetoday.com]"` in `trefwoorden` becomes `NaN`.
+- Waardes in `Themas_boek` die beginnen met `https` worden `NaN`.
+- `"[naturetoday.com]"` in `trefwoorden` wordt `NaN`.
 
-> **Why:** Some entries had the **source URL** of an article in `Themas_boek` instead of themes.
+> **Waarom:** Sommige entries hadden de **bron-URL** van een artikel in `Themas_boek` staan in plaats van thema's.
 >
-> **Why (trefwoorden):** _(to fill in)_
+> **Waarom (trefwoorden):** _(nog invullen)_
 
 ### Interessecluster
 
-`"VERHALEN"` → `"verhalen"`. Values: `verhalen`, `vrije tijd`, `maatschappij`.
+`"VERHALEN"` → `"verhalen"`. Waardes: `verhalen`, `vrije tijd`, `maatschappij`.
 
-> **Why:** Consistency (`verhalen` and `VERHALEN` were both used).
+> **Waarom:** Consistentie (`verhalen` en `VERHALEN` werden allebei gebruikt).
 
 ### Beschikbaar formaat
 
-`online`/`Online` → `Online`, `papier`/`Papier` → `Papier`. Values: `pdf`, `digitaal`, `Online`, `Papier`, `NaN`.
+`online`/`Online` → `Online`, `papier`/`Papier` → `Papier`. Waardes: `pdf`, `digitaal`, `Online`, `Papier`, `NaN`.
 
-> **Why:** Consistency (both spellings were used).
+> **Waarom:** Consistentie (beide schrijfwijzen werden gebruikt).
 
-## 3. What we could predict
+## 3. Wat we kunnen voorspellen
 
-From the notes in the notebook:
+Uit de notities in het notebook:
 
-- **Leescomplexiteit score**: predict a student's complexity score so books with similar scores can be recommended.
-- **Lees niveau**: _(to fill in)_
-- **Geschatte leestijd**: _(to fill in)_
-- **Doelgroep**: _(to fill in)_
+- **Leescomplexiteit score**: de complexiteitsscore van een student voorspellen, zodat boeken met vergelijkbare scores aangeraden kunnen worden.
+- **Leesniveau**: _(nog invullen)_
+- **Geschatte leestijd**: _(nog invullen)_
+- **Doelgroep**: _(nog invullen)_
 
-Maybe:
+Misschien:
 
-- Themas
+- Thema's
 - Onderwerp
-- Maybe merge those two (dimensionality reduction)
+- Misschien die twee samenvoegen (dimensionality reduction)
 
-## 4. Linear regression: reading time → number of pages
+## 4. Lineaire regressie: leestijd → aantal pagina's
 
-- `aantal_paginas` ≤ 0 is set to `NaN`, and only rows with a valid page count are kept (`LD_paginas`).
-- `X = geschatte_leestijd_min`, `y = aantal_paginas`, 80/20 train/test split (`random_state=42`), scaled with `StandardScaler`.
-- `LinearRegression` is fit, and train/test points are plotted.
+- `aantal_paginas` ≤ 0 wordt `NaN`, en alleen rijen met een geldig aantal pagina's blijven over (`LD_paginas`).
+- `X = geschatte_leestijd_min`, `y = aantal_paginas`, 80/20 train/test-split (`random_state=42`), geschaald met `StandardScaler`.
+- `LinearRegression` wordt getraind, en de train- en testpunten worden geplot.
 
-> **Why (≤ 0 pages):** 0 or a negative number of pages is impossible, so it's treated as missing.
+> **Waarom (≤ 0 pagina's):** 0 of een negatief aantal pagina's is onmogelijk, dus dat wordt behandeld als ontbrekend.
 >
-> **Why this model / these features:** _(to fill in)_
+> **Waarom dit model / deze features:** _(nog invullen)_
 >
-> **Results / evaluation:** _(to fill in)_
+> **Resultaten / evaluatie:** _(nog invullen)_
 
 ## 5. K-Means clustering
 
-- Features: `geschatte_leestijd_min` and `aantal_paginas`, scaled with `StandardScaler`.
-- `k` from 2 to 8 is compared with the elbow method (inertia) and the silhouette score.
-- Final model: `k = 3`.
+- Features: `geschatte_leestijd_min` en `aantal_paginas`, geschaald met `StandardScaler`.
+- `k` van 2 tot 8 wordt vergeleken met de elbow-methode (inertia) en de silhouette score.
+- Eindmodel: `k = 3`.
 
-> **Why these features:** The same features as the linear regression.
+> **Waarom deze features:** Dezelfde features als bij de lineaire regressie.
 >
-> **Why scaling:** Otherwise reading time (bigger numbers) dominates the distance.
+> **Waarom schalen:** Anders domineert leestijd (grotere getallen) de afstand.
 >
-> **Why k = 3:** Clear bend in the elbow plot, and the silhouette score stays about the same for higher k.
+> **Waarom k = 3:** Duidelijke knik in de elbow-plot, en de silhouette score blijft ongeveer gelijk bij hogere k.
 
-Cluster results:
+Clusterresultaten:
 
-| Cluster | Avg. reading time (min) | Avg. pages | Rows | Mostly |
+| Cluster | Gem. leestijd (min) | Gem. pagina's | Rijen | Vooral |
 |---|---|---|---|---|
-| 0 | 312 | 201 | 121 | books (107), dichtbundels (11) |
-| 1 | 23 | 12 | 50 | online articles (32), blogposts (14) |
-| 2 | 669 | 266 | 84 | books (74), dichtbundels (9) |
+| 0 | 312 | 201 | 121 | boeken (107), dichtbundels (11) |
+| 1 | 23 | 12 | 50 | online artikelen (32), blogposts (14) |
+| 2 | 669 | 266 | 84 | boeken (74), dichtbundels (9) |
 
-> **Interpretation:** _(to fill in)_
+> **Interpretatie:** _(nog invullen)_
 
-## 6. Text column for NLP
+## 6. Tekstkolom voor NLP
 
-A new column `Combine` joins `Korte omschrijving`, `onderwerp`, `genre` and `Themas_boek` with spaces (`NaN` → empty string).
+Een nieuwe kolom `Combine` voegt `Korte omschrijving`, `onderwerp`, `genre` en `Themas_boek` samen met spaties (`NaN` → lege string).
 
-> **Why:** Every column except `Korte omschrijving` has missing values. The relevant information is in `trefwoorden`/`Themas_boek`, `onderwerp` and `Korte omschrijving`. `trefwoorden` and `Themas_boek` hold the same kind of data, but in a different format (whitespace after the semicolon), once the URLs are removed. So: combine them, and fill `NaN` with whitespace.
+> **Waarom:** Alle kolommen behalve `Korte omschrijving` hebben ontbrekende waardes. De relevante informatie zit in `trefwoorden`/`Themas_boek`, `onderwerp` en `Korte omschrijving`. `trefwoorden` en `Themas_boek` bevatten hetzelfde soort data, maar in een ander format (witruimte na de puntkomma), nadat de URL's eruit zijn gehaald. Dus: combineren, en `NaN` invullen met witruimte.
 >
-> **Why `trefwoorden` is left out:** It has exactly the same content as `Themas_boek`. The only difference is the whitespace between the separator and the next word (`woii; onderduik` vs `woii;onderduik`). Adding both would count every theme twice.
+> **Waarom `trefwoorden` er niet in zit:** Het heeft precies dezelfde inhoud als `Themas_boek`. Het enige verschil is de witruimte tussen het scheidingsteken en het volgende woord (`woii; onderduik` vs `woii;onderduik`). Als je ze allebei toevoegt, telt elk thema twee keer.
 
-## 7. Interactions × reading material
+## 7. Interacties × leesmateriaal
 
-`Recommender_Interacties.csv` (`RI`) is loaded and left-joined to `LD` on `cataloguscode` (`merged`).
+`Recommender_Interacties.csv` (`RI`) wordt ingeladen en met een left join op `cataloguscode` aan `LD` gekoppeld (`merged`).
 
-> **Why / plan:** Not yet decided whether to do anything with this.
+> **Waarom / plan:** Nog niet besloten of we hier iets mee doen.
 
 ## 8. NLP
 
-Planned steps: normalization, tokenization, stopword removal, stemming, lemmatization, POS tagging.
+Geplande stappen: normalisatie, tokenisatie, stopwoorden verwijderen, stemming, lemmatisatie, POS-tagging.
 
-### Normalization → `Combine_Normalized`
+### Normalisatie → `Combine_Normalized`
 
 - lowercase
-- remove numbers
-- remove punctuation
-- strip leading/trailing whitespace
-- remove Dutch stopwords (NLTK `stopwords.words("dutch")`)
+- nummers weg
+- leestekens weg
+- witruimte aan begin en eind weg
+- Nederlandse stopwoorden weg (NLTK `stopwords.words("dutch")`)
 
-> **Why:** _(to fill in)_
+> **Waarom:** _(nog invullen)_
 >
-> **Why NLTK for stopwords:** _(to fill in)_
+> **Waarom NLTK voor stopwoorden:** _(nog invullen)_
 
-### Tokenization → `Token_List`
+### Tokenisatie → `Token_List`
 
-`Combine_Normalized` is split on whitespace with `.str.split()`.
+`Combine_Normalized` wordt gesplitst op witruimte met `.str.split()`.
 
-> **Why:** The split approach was suggested by Jarno (AI).
+> **Waarom:** De split-manier is een suggestie van Jarno (AI).
 
-### Lemmatization → `Lemmatized`
+### Lemmatisatie → `Lemmatized`
 
-spaCy `nl_core_news_sm` (with `parser` and `ner` turned off) makes a list of lemmas for each row.
+spaCy `nl_core_news_sm` (met `parser` en `ner` uitgeschakeld) maakt per rij een lijst met lemma's.
 
-> **Why lemmatization:** _(to fill in)_
+> **Waarom lemmatisatie:** _(nog invullen)_
 >
-> **Why spaCy / this model:** _(to fill in)_
+> **Waarom spaCy / dit model:** _(nog invullen)_
 >
-> **Why `parser` and `ner` are off:** _(to fill in)_
+> **Waarom `parser` en `ner` uit staan:** _(nog invullen)_
 
-Stemming and POS tagging are not in the notebook yet.
+Stemming en POS-tagging zitten nog niet in het notebook.
 
 ## 9. Bag of Words
 
-`CountVectorizer` on `Token_List`:
+`CountVectorizer` op `Token_List`:
 
-- `analyzer=lambda tokens: tokens`: the input is already a list of tokens
-- `min_df=2`: drop words that appear in fewer than 2 books
-- `max_features=5000`: keep the 5000 most common words
+- `analyzer=lambda tokens: tokens`: de input is al een lijst met tokens
+- `min_df=2`: woorden die in minder dan 2 boeken voorkomen vallen weg
+- `max_features=5000`: de 5000 meest voorkomende woorden houden
 - `lowercase=False`
 
-Result: `XTokens` with shape **(283, 393)**, meaning 283 items and 393 words. `df_bow` is the same matrix as a DataFrame.
+Resultaat: `XTokens` met shape **(283, 393)**, dus 283 items en 393 woorden. `df_bow` is dezelfde matrix als DataFrame.
 
-> **Why these settings:** _(to fill in)_
+> **Waarom deze instellingen:** _(nog invullen)_
 
-**Next step (from the notebook):** To build a recommender with Bag of Words, we need to find books whose vectors are closest to each other (content-based filtering). The usual way to do that is cosine similarity. See [BagOfWords_Recommendation.md](BagOfWords_Recommendation.md).
+**Volgende stap (uit het notebook):** Om met Bag of Words een recommender te maken, moeten we boeken vinden waarvan de vectoren het dichtst bij elkaar liggen (content-based filtering). De gebruikelijke manier om dat te doen is cosine similarity. Zie [BagOfWords_Recommendation.md](BagOfWords_Recommendation.md).
 
-## Known issues in the current code
+## Bekende problemen in de huidige code
 
-1. **Genre fill does nothing (cell 15).** `LD[mask]["genre"] = ...` is chained assignment and writes to a copy (pandas prints a `ChainedAssignmentError`). `genre` still has `NaN`. Use `LD.loc[mask, "genre"] = LD.loc[mask, "genre"].fillna("informatief")`. The markdown cell above it still says "fictie" and should be updated to informatief/poëzie.
-2. **Doelgroep variants aren't merged (cell 16).** Everything is already lowercase after cell 2, and the value is `mbo/nt2` (no spaces), so the result is still `MBO`, `mbo/nt2`, `nt2`, `NT2`, `MBO/NT2`.
-3. **No-op replacements.** `"VERHALEN"` (interessecluster) no longer exists after lowercasing. `beschikbaar_formaat` now mixes capitalized (`Online`, `Papier`) and lowercase (`pdf`, `digitaal`) values.
-4. **Cell 51 undoes normalization.** Both lines read from `LD["Combine"]`, so number removal is lost. See [BagOfWords_Recommendation.md](BagOfWords_Recommendation.md).
-5. **Bag of Words uses `Token_List`, not `Lemmatized`.**
-6. **The linear regression isn't evaluated** (no score/MSE on the test set).
+1. **Genre vullen doet niks (cel 15).** `LD[mask]["genre"] = ...` is chained assignment en schrijft naar een kopie (pandas geeft een `ChainedAssignmentError`). `genre` heeft nog steeds `NaN`. Gebruik `LD.loc[mask, "genre"] = LD.loc[mask, "genre"].fillna("informatief")`. De markdown-cel erboven zegt nog "fictie" en moet aangepast worden naar informatief/poëzie.
+2. **Doelgroep-varianten worden niet samengevoegd (cel 16).** Na cel 2 is alles al lowercase, en de waarde is `mbo/nt2` (zonder spaties), dus het resultaat is nog steeds `MBO`, `mbo/nt2`, `nt2`, `NT2`, `MBO/NT2`.
+3. **Vervangingen die niks doen.** `"VERHALEN"` (interessecluster) bestaat na het lowercasen niet meer. `beschikbaar_formaat` heeft nu een mix van hoofdletters (`Online`, `Papier`) en kleine letters (`pdf`, `digitaal`).
+4. **Cel 51 maakt de normalisatie ongedaan.** Beide regels lezen uit `LD["Combine"]`, dus het weghalen van nummers gaat verloren. Zie [BagOfWords_Recommendation.md](BagOfWords_Recommendation.md).
+5. **Bag of Words gebruikt `Token_List`, niet `Lemmatized`.**
+6. **De lineaire regressie wordt niet geëvalueerd** (geen score/MSE op de testset).
