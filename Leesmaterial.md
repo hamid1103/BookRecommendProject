@@ -4,6 +4,56 @@ Dit notebook schoont de leescatalogus op (`Leescatalogus_Recommender_Definitief_
 
 De **Waarom**-regels komen uit de notities en opmerkingen in het notebook. Waar het notebook geen reden geeft, staat _(nog invullen)_.
 
+## Overzicht: problemen per kolom
+
+Uitkomst van de data-analyse (uit `data_analyse.docx`): per kolom het gevonden probleem en de gekozen oplossing. De secties hieronder werken de oplossingen uit.
+
+| Kolom | Probleem | Oplossing |
+|---|---|---|
+| Titel |  |  |
+| Auteur | Er ontbreken 7 auteurs |  |
+| Korte omschrijving |  |  |
+| Unnamed: 3 | Onnodig, er is geen data aanwezig en het zegt niks over de data | De kolom verwijdert |
+| Type materiaal | Verschillen in spelling: boek, Boek, boek-thriller | Met regex alles gewijzigd naar boek |
+| Niveau | 6 ontbrekende niveaus | Allen nans naar 2f?? |
+| Thema’s boek | Er ontbreken 134 thema’s |  |
+| Materiaal id |  |  |
+| Genre | Er ontbreken 26 genres | Alle nans naar fictie zetten |
+| Onderwerp | 181 lege onderwerpen |  |
+| Trefwoorden | 181 lege onderwerpen |  |
+| Taal | Verschillen in NL, NED, nederlands | Alles met regex naar Nederlands gezet |
+| Aantal paginas | Een Aantal pagina’s zijn nul of negatieve waarde en 17 ontbreken | Model trainen op geschatte leestijd min zodat we predictions kunnen maken |
+| Geschatte leestijd | 9 ontbrekende leestijden | Fixen met de mediaan zit het dichtst bij alle leestijden: 366 |
+| Bron url | 234 ontbrekende URL’s, maar boeken hebben geen URL | Doen we niks mee, de ontbrekende zijn boeken en die hebben geen url |
+| Doelgroep | 6 ontbrekende doelgroepen | Alle nans naar nt2, zijn artikelen voor nt2 cursisten |
+| Gegevens status | 8 ontbrekende gegevens status |  |
+| Woorden aantal omschrijving |  |  |
+| Gem woord lengte |  |  |
+| Gemiddelde zinslengte woorden | 8 ontbrekende gemiddelde |  |
+| Aandeel lange woorden |  |  |
+| Aantal zinnen | Moet aantal zinnen in korte omschrijving worden |  |
+| Leescomplexiteit score | 6 ontbrekende leescomplexiteit scores |  |
+| Interessecluster | VERHALEN en verhalen zijn anders in format | Met regex alles omgezet naar verhalen |
+| Uitgever | Er ontbreken 106 uitgevers |  |
+| Publicatie jaar | Er ontbreken 56 jaren |  |
+| Beschikbaar formaat | Formaten van online en papier fixen |  |
+| Catalogus code |  |  |
+| Interne batch code | 69 ontbrekende codes |  |
+| Administratieve prioriteit | Er ontbreken 57 prioriteiten |  |
+| Doelgroep extra | 72 ontbrekende extra groepen |  |
+| Genre kopie | 62 kopieen leeg |  |
+| Gemiddelde beoordeling | 100 ontbrekende beoordelingen |  |
+
+> **Let op: afwijkingen tussen deze tabel en de rest van de documentatie**
+>
+> - **Genre:** de tabel zegt "alle nans naar fictie", maar sectie 2 vult met informatief (artikelen, kranten, tijdschriften, blogposts) en poëzie (dichtbundels).
+> - **Niveau:** de tabel zegt "allen nans naar 2f??", het notebook beschrijft dit niet. _(nog invullen)_
+> - **Geschatte leestijd:** de tabel noemt de mediaan (366) als beste keuze, dit is in lijn met de code.
+> - **Aantal paginas:** de tabel noemt 17 ontbrekende waardes, naast nul of negatief. In sectie 4 worden ≤ 0 waardes `NaN` en vallen ontbrekende rijen weg.
+> - **Trefwoorden:** de tabel noemt "181 lege onderwerpen", hetzelfde getal als bij Onderwerp. Dat is waarschijnlijk een kopieerfout.
+> - **Aantal zinnen:** de tabel zegt dat dit het aantal zinnen in de korte omschrijving moet worden, in het notebook is dit nog niet gedaan.
+> - **Kolommen zonder oplossing:** voor Titel, Auteur, Themas boek, Onderwerp, Trefwoorden, Gegevens status, Uitgever, Publicatie jaar, Interne batch code, Administratieve prioriteit, Doelgroep extra, Genre kopie en Gemiddelde beoordeling is nog geen oplossing ingevuld.
+
 ## 1. Inladen en algemene opschoning
 
 ```python
