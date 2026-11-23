@@ -92,7 +92,7 @@ Alle boekvarianten (`boek - thriller`, `boek - roman`, ...) worden `"boek"`. Res
 
 > **Waarom:** Groeperen op leesniveau (`Niveau`) is hier niet handig: dan geef je een digitaal artikel 350 minuten. Groeperen op type materiaal geeft realistische waardes.
 >
-> **Waarom mediaan en niet gemiddelde:** _(nog invullen)_ (de notitie zegt "gemiddelde", de code gebruikt `median`)
+> **Waarom mediaan en niet gemiddelde:** _(nog invullen)_
 
 ### Genre en doelgroep
 
@@ -240,8 +240,7 @@ Resultaat: `XTokens` met shape **(283, 393)**, dus 283 items en 393 woorden. `df
 
 ## Bekende problemen in de huidige code
 
-1. **Genre vullen doet niks (cel 15).** `LD[mask]["genre"] = ...` is chained assignment en schrijft naar een kopie (pandas geeft een `ChainedAssignmentError`). `genre` heeft nog steeds `NaN`. Gebruik `LD.loc[mask, "genre"] = LD.loc[mask, "genre"].fillna("informatief")`. De markdown-cel erboven zegt nog "fictie" en moet aangepast worden naar informatief/poëzie.
-2. **Doelgroep-varianten worden niet samengevoegd (cel 16).** Na cel 2 is alles al lowercase, en de waarde is `mbo/nt2` (zonder spaties), dus het resultaat is nog steeds `MBO`, `mbo/nt2`, `nt2`, `NT2`, `MBO/NT2`.
+1. **Genre vullen doet niks (cel 15).** `LD[mask]["genre"] = ...` is chained assignment en schrijft naar een kopie (pandas geeft een `ChainedAssignmentError`). `genre` heeft nog steeds `NaN`. Gebruik `LD.loc[mask, "genre"] = LD.loc[mask, "genre"].fillna("informatief")`.2. **Doelgroep-varianten worden niet samengevoegd (cel 16).** Na cel 2 is alles al lowercase, en de waarde is `mbo/nt2` (zonder spaties), dus het resultaat is nog steeds `MBO`, `mbo/nt2`, `nt2`, `NT2`, `MBO/NT2`.
 3. **Vervangingen die niks doen.** `"VERHALEN"` (interessecluster) bestaat na het lowercasen niet meer. `beschikbaar_formaat` heeft nu een mix van hoofdletters (`Online`, `Papier`) en kleine letters (`pdf`, `digitaal`).
 4. **Cel 51 maakt de normalisatie ongedaan.** Beide regels lezen uit `LD["Combine"]`, dus het weghalen van nummers gaat verloren. Zie [BagOfWords_Recommendation.md](BagOfWords_Recommendation.md).
 5. **Bag of Words gebruikt `Token_List`, niet `Lemmatized`.**
